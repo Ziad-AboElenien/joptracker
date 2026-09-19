@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String?
+  boards    Board[]
+  createdAt DateTime @default(now())
+}
+
+model Board {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String   @default("Job Search")
+  columns   Column[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Column {
+  id      String    @id @default(cuid())
+  boardId String
+  board   Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  name    String
+  order   Int
+  cards   JobCard[]
+
+  @@index([boardId, order])
+}
+
+model JobCard {
+  id          String   @id @default(cuid())
+  columnId    String
+  column      Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  order       Int
+  company     String
+  role        String
+  jobUrl      String?
+  salary      Int?
+  notes       String?
+  tags        String   @default("[]") // JSON string[] (SQLite has no array type)
+  dateApplied DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  logs        ActivityLog[]
+
+  @@index([columnId, order])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  jobCardId String
+  jobCard   JobCard  @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
+  action    String
+  timestamp DateTime @default(now())
+
+  @@index([jobCardId, timestamp])
+}
