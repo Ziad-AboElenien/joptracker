@@ -10,7 +10,14 @@ import { faChartColumn, faLayerGroup, faRightFromBracket, faRightToBracket, faTa
 export default async function BoardPage() {
   // Protected route: require session unless demo mode (no GitHub creds configured
   // and no DB) — in that case we still render with demo-user fallback in APIs.
-  const session = await getServerSession(authOptions);
+  // getServerSession can throw in production when auth env is missing
+  // (e.g. NEXTAUTH_SECRET); fall back to demo mode instead of crashing.
+  let session = null;
+  try {
+    session = await getServerSession(authOptions);
+  } catch {
+    session = null;
+  }
   const authStrict = process.env.AUTH_STRICT === "1";
   if (!session && authStrict) redirect("/login");
 
