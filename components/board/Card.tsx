@@ -13,6 +13,8 @@ export function JobCard({ card }: { card: JobCardT }) {
   const setDetailCard = useBoardStore((s) => s.setDetailCard);
   const deleteCardLocal = useBoardStore((s) => s.deleteCardLocal);
   const upsertCardLocal = useBoardStore((s) => s.upsertCardLocal);
+  const requestConfirm = useBoardStore((s) => s.requestConfirm);
+  const showNotice = useBoardStore((s) => s.showNotice);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: `card-${card.id}`,
   });
@@ -20,7 +22,13 @@ export function JobCard({ card }: { card: JobCardT }) {
 
   // Optimistic delete: remove locally first, restore on API failure.
   const handleDelete = async () => {
-    if (!confirm(`Delete ${card.company} — ${card.role}?`)) return;
+    const ok = await requestConfirm({
+      title: "Delete job?",
+      message: `Delete ${card.company} — ${card.role}? This cannot be undone.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
     const removed = deleteCardLocal(card.id);
     if (!removed) return;
     try {
@@ -28,7 +36,7 @@ export function JobCard({ card }: { card: JobCardT }) {
       if (!res.ok) throw new Error("Delete failed");
     } catch {
       upsertCardLocal(removed);
-      alert("Delete failed — card restored.");
+      await showNotice({ title: "Delete failed", message: "The card was restored." });
     }
   };
 

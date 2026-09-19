@@ -26,6 +26,8 @@ export function ColumnView({ columnId }: { columnId: string }) {
   const renameColumnLocal = useBoardStore((s) => s.renameColumnLocal);
   const deleteColumnLocal = useBoardStore((s) => s.deleteColumnLocal);
   const reorderColumn = useBoardStore((s) => s.reorderColumn);
+  const requestConfirm = useBoardStore((s) => s.requestConfirm);
+  const showNotice = useBoardStore((s) => s.showNotice);
   const columnIndex = useBoardStore((s) => s.columnOrder.indexOf(columnId));
   const columnCount = useBoardStore((s) => s.columnOrder.length);
   const [editing, setEditing] = useState(false);
@@ -38,8 +40,20 @@ export function ColumnView({ columnId }: { columnId: string }) {
     const res = await fetch("/api/columns", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order }) });
     if (!res.ok) {
       useBoardStore.getState().undo();
-      alert("Reorder failed — restored.");
+      await showNotice({ title: "Reorder failed", message: "The column order was restored." });
     }
+  };
+
+  const handleDeleteColumn = async () => {
+    const ok = await requestConfirm({
+      title: "Delete column?",
+      message: `Delete "${column.name}" and all its cards? This cannot be undone.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
+    deleteColumnLocal(columnId);
+    fetch(`/api/columns/${columnId}`, { method: "DELETE" });
   };
 
   const { setNodeRef } = useDroppable({ id: `col-${columnId}` });
@@ -86,7 +100,7 @@ export function ColumnView({ columnId }: { columnId: string }) {
               <button aria-label={`Rename ${column.name}`} className={iconBtn} onClick={() => { setName(column.name); setEditing(true); }}>
                 <FontAwesomeIcon icon={faPen} className="h-3 w-3" />
               </button>
-              <button aria-label={`Delete ${column.name}`} className={iconBtn + " hover:bg-red-500/10 hover:text-red-500"} onClick={() => { if (confirm(`Delete column "${column.name}" and its cards?`)) { deleteColumnLocal(columnId); fetch(`/api/columns/${columnId}`, { method: "DELETE" }); } }}>
+              <button aria-label={`Delete ${column.name}`} className={iconBtn + " hover:bg-red-500/10 hover:text-red-500"} onClick={handleDeleteColumn}>
                 <FontAwesomeIcon icon={faTrashCan} className="h-3 w-3" />
               </button>
             </div>

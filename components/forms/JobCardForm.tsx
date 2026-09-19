@@ -26,6 +26,7 @@ export function JobCardForm() {
   const formDefaultColumnId = useBoardStore((s) => s.formDefaultColumnId);
   const closeForm = useBoardStore((s) => s.closeForm);
   const upsertCardLocal = useBoardStore((s) => s.upsertCardLocal);
+  const showNotice = useBoardStore((s) => s.showNotice);
   const cards = useBoardStore((s) => s.cards);
   const columns = useBoardStore((s) => s.columns);
   const columnOrder = useBoardStore((s) => s.columnOrder);
@@ -87,7 +88,7 @@ export function JobCardForm() {
     },
     onError: () => {
       qc.invalidateQueries({ queryKey: ["board"] });
-      alert("Save failed — rolled back.");
+      void showNotice({ title: "Save failed", message: "Your changes were rolled back." });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["board"] });

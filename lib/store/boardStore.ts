@@ -25,6 +25,20 @@ export interface Filters {
   dateTo: string | null;
 }
 
+export interface ConfirmRequest {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  danger?: boolean;
+  resolve: (confirmed: boolean) => void;
+}
+
+export interface NoticeRequest {
+  title: string;
+  message: string;
+  resolve: () => void;
+}
+
 interface Snapshot {
   columns: Record<string, ColumnT>;
   columnOrder: string[];
@@ -79,6 +93,14 @@ interface BoardStore {
   openEdit: (cardId: string) => void;
   closeForm: () => void;
   setDetailCard: (cardId: string | null) => void;
+
+  // app dialogs (replace native confirm()/alert() with styled modals)
+  confirmRequest: ConfirmRequest | null;
+  notice: NoticeRequest | null;
+  requestConfirm: (opts: Omit<ConfirmRequest, "resolve">) => Promise<boolean>;
+  answerConfirm: (confirmed: boolean) => void;
+  showNotice: (opts: Omit<NoticeRequest, "resolve">) => Promise<void>;
+  dismissNotice: () => void;
 }
 
 function takeSnapshot(s: BoardStore): Snapshot {
@@ -323,6 +345,25 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   openEdit: (cardId) => set({ isFormOpen: true, editingCardId: cardId }),
   closeForm: () => set({ isFormOpen: false, editingCardId: null }),
   setDetailCard: (cardId) => set({ detailCardId: cardId }),
+
+  confirmRequest: null,
+  notice: null,
+  requestConfirm: (opts) =>
+    new Promise<boolean>((resolve) => {
+      set({ confirmRequest: { ...opts, resolve } });
+    }),
+  answerConfirm: (confirmed) => {
+    get().confirmRequest?.resolve(confirmed);
+    set({ confirmRequest: null });
+  },
+  showNotice: (opts) =>
+    new Promise<void>((resolve) => {
+      set({ notice: { ...opts, resolve } });
+    }),
+  dismissNotice: () => {
+    get().notice?.resolve();
+    set({ notice: null });
+  },
 }));
 
 // Activity log is server-fetched per card (TanStack Query), not kept in Zustand

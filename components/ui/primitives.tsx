@@ -55,12 +55,12 @@ export const CardShell = React.forwardRef<HTMLDivElement, React.HTMLAttributes<H
   return <div ref={ref} {...props} className={cn("rounded-2xl border border-white/60 bg-white/70 shadow-lg shadow-slate-900/5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/60 dark:shadow-black/30", className)} />;
 });
 
-export function Modal({ open, onClose, title, icon, children }: { open: boolean; onClose: () => void; title: string; icon?: React.ReactNode; children: React.ReactNode }) {
+export function Modal({ open, onClose, title, icon, narrow, children }: { open: boolean; onClose: () => void; title: string; icon?: React.ReactNode; narrow?: boolean; children: React.ReactNode }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
       <div className="anim-overlay absolute inset-0 bg-slate-950/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="anim-panel relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/60 bg-white/85 p-5 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/85">
+      <div className={`anim-panel relative max-h-[90vh] w-full ${narrow ? "max-w-sm" : "max-w-lg"} overflow-y-auto rounded-2xl border border-white/60 bg-white/85 p-5 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/85`}>
         <div className="mb-4 flex items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 text-lg font-semibold">{icon}{title}</h2>
           <button

@@ -10,6 +10,7 @@ import { ColumnView } from "@/components/board/Column";
 import { JobCardForm } from "@/components/forms/JobCardForm";
 import { SearchFilterBar } from "@/components/board/SearchFilterBar";
 import { CardDetailModal } from "@/components/board/CardDetailModal";
+import { ConfirmDialog, NoticeDialog } from "@/components/ui/dialogs";
 import { AnalyticsView } from "@/components/analytics/AnalyticsView";
 import { Button, Input } from "@/components/ui/primitives";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
@@ -150,6 +151,8 @@ export function Board() {
 
       <JobCardForm />
       <CardDetailModal />
+      <ConfirmDialog />
+      <NoticeDialog />
       <p className="pb-4 text-xs text-zinc-500 dark:text-zinc-400">Tip: drag cards with mouse or keyboard (Tab, Space, then arrow keys). Undo: Ctrl/Cmd+Z — Redo: Ctrl/Cmd+Shift+Z or Ctrl+Y.</p>
     </div>
   );
