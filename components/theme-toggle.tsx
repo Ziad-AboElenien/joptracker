@@ -4,18 +4,24 @@ import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/primitives";
 
-function initialDark(): boolean {
-  if (typeof window === "undefined") return false;
-  const stored = localStorage.getItem("jt-theme");
-  if (stored) return stored === "dark";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
-}
-
+/**
+ * Hydration-safe theme toggle.
+ * Server and first client render always show the same icon (Moon). The real
+ * theme class is applied pre-hydration by an inline script in app/layout.tsx
+ * (avoids FOUC), and this component reads it after mount. The mount-only
+ * setState below is intentional: it syncs React with the external DOM state
+ * exactly once, after hydration, so SSR HTML and first client render match.
+ */
 export function ThemeToggle() {
-  const [dark, setDark] = useState(initialDark);
+  const [dark, setDark] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-  }, [dark]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+    setDark(document.documentElement.classList.contains("dark"));
+  }, []);
+
   return (
     <Button
       variant="outline"
@@ -24,10 +30,15 @@ export function ThemeToggle() {
       onClick={() => {
         const next = !dark;
         setDark(next);
-        localStorage.setItem("jt-theme", next ? "dark" : "light");
+        document.documentElement.classList.toggle("dark", next);
+        try {
+          localStorage.setItem("jt-theme", next ? "dark" : "light");
+        } catch {
+          // private mode etc. — theme just won't persist
+        }
       }}
     >
-      {dark ? <Sun size={16} /> : <Moon size={16} />}
+      {mounted && dark ? <Sun size={16} /> : <Moon size={16} />}
     </Button>
   );
 }
