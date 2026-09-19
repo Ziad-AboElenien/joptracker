@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronLeft, faChevronRight, faPen, faPlus, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
 import { useBoardStore, applyCardFilters } from "@/lib/store/boardStore";
@@ -19,6 +21,7 @@ export function ColumnView({ columnId }: { columnId: string }) {
     const list = (cardIds ?? []).map((id) => cardsById[id]).filter((c): c is JobCardT => Boolean(c));
     return applyCardFilters(list, filters);
   }, [cardIds, cardsById, filters]);
+
   const openCreate = useBoardStore((s) => s.openCreate);
   const renameColumnLocal = useBoardStore((s) => s.renameColumnLocal);
   const deleteColumnLocal = useBoardStore((s) => s.deleteColumnLocal);
@@ -42,12 +45,19 @@ export function ColumnView({ columnId }: { columnId: string }) {
   const { setNodeRef } = useDroppable({ id: `col-${columnId}` });
   if (!column) return null;
 
+  const iconBtn =
+    "flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-indigo-500/10 hover:text-indigo-600 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-zinc-400 dark:text-zinc-500 dark:hover:text-indigo-300";
+
   return (
-    <div ref={setNodeRef} className="flex w-72 shrink-0 flex-col rounded-xl bg-zinc-100 p-3 dark:bg-zinc-800/60" data-testid={`column-${column.id}`}>
-      <div className="mb-2 flex items-center justify-between">
+    <div
+      ref={setNodeRef}
+      className="flex w-full flex-col rounded-2xl border border-white/60 bg-white/55 p-3 shadow-lg shadow-slate-900/5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/50 dark:shadow-black/30"
+      data-testid={`column-${column.id}`}
+    >
+      <div className="mb-3 flex items-center justify-between gap-1">
         {editing ? (
           <form
-            className="flex gap-1"
+            className="flex w-full gap-1.5"
             onSubmit={(e) => {
               e.preventDefault();
               if (name.trim()) {
@@ -57,29 +67,47 @@ export function ColumnView({ columnId }: { columnId: string }) {
               setEditing(false);
             }}
           >
-            <Input value={name} onChange={(e) => setName(e.target.value)} aria-label="Column name" />
-            <Button size="sm" type="submit">Save</Button>
+            <Input value={name} onChange={(e) => setName(e.target.value)} aria-label="Column name" autoFocus className="h-8" />
+            <Button size="sm" variant="primary" type="submit">Save</Button>
           </form>
         ) : (
           <>
-            <h3 className="font-semibold">{column.name} <span className="text-xs text-zinc-500">({cards.length})</span></h3>
-            <div className="flex gap-1">
-              <button aria-label={`Move ${column.name} left`} disabled={columnIndex <= 0} className="rounded px-1 text-xs hover:bg-zinc-200 disabled:opacity-30 dark:hover:bg-zinc-700" onClick={() => moveColumn(-1)}>◀</button>
-              <button aria-label={`Move ${column.name} right`} disabled={columnIndex >= columnCount - 1} className="rounded px-1 text-xs hover:bg-zinc-200 disabled:opacity-30 dark:hover:bg-zinc-700" onClick={() => moveColumn(1)}>▶</button>
-              <button aria-label={`Rename ${column.name}`} className="rounded px-1 text-xs hover:bg-zinc-200 dark:hover:bg-zinc-700" onClick={() => { setName(column.name); setEditing(true); }}>✎</button>
-              <button aria-label={`Delete ${column.name}`} className="rounded px-1 text-xs hover:bg-zinc-200 dark:hover:bg-zinc-700" onClick={() => { if (confirm(`Delete column "${column.name}" and its cards?`)) { deleteColumnLocal(columnId); fetch(`/api/columns/${columnId}`, { method: "DELETE" }); } }}>🗑</button>
+            <h3 className="flex min-w-0 items-center gap-2 font-semibold">
+              <span className="truncate">{column.name}</span>
+              <span className="shrink-0 rounded-full bg-indigo-500/15 px-2 py-0.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300">{cards.length}</span>
+            </h3>
+            <div className="flex shrink-0 items-center">
+              <button aria-label={`Move ${column.name} left`} disabled={columnIndex <= 0} className={iconBtn} onClick={() => moveColumn(-1)}>
+                <FontAwesomeIcon icon={faChevronLeft} className="h-3 w-3" />
+              </button>
+              <button aria-label={`Move ${column.name} right`} disabled={columnIndex >= columnCount - 1} className={iconBtn} onClick={() => moveColumn(1)}>
+                <FontAwesomeIcon icon={faChevronRight} className="h-3 w-3" />
+              </button>
+              <button aria-label={`Rename ${column.name}`} className={iconBtn} onClick={() => { setName(column.name); setEditing(true); }}>
+                <FontAwesomeIcon icon={faPen} className="h-3 w-3" />
+              </button>
+              <button aria-label={`Delete ${column.name}`} className={iconBtn + " hover:bg-red-500/10 hover:text-red-500"} onClick={() => { if (confirm(`Delete column "${column.name}" and its cards?`)) { deleteColumnLocal(columnId); fetch(`/api/columns/${columnId}`, { method: "DELETE" }); } }}>
+                <FontAwesomeIcon icon={faTrashCan} className="h-3 w-3" />
+              </button>
             </div>
           </>
         )}
       </div>
       <SortableContext items={cards.map((c) => `card-${c.id}`)} strategy={verticalListSortingStrategy}>
-        <div className="flex flex-col gap-2">
+        <div className="flex min-h-10 flex-col gap-2">
+          {cards.length === 0 && (
+            <p className="rounded-xl border border-dashed border-zinc-300 px-3 py-4 text-center text-xs text-zinc-400 dark:border-white/10 dark:text-zinc-500">
+              Drop cards here
+            </p>
+          )}
           {cards.map((c) => (
             <JobCard key={c.id} card={c} />
           ))}
         </div>
       </SortableContext>
-      <Button variant="ghost" size="sm" className="mt-2" onClick={() => openCreate(columnId)}>+ Add job</Button>
+      <Button variant="ghost" size="sm" className="mt-2 text-zinc-500 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-300" onClick={() => openCreate(columnId)}>
+        <FontAwesomeIcon icon={faPlus} className="h-3 w-3" /> Add job
+      </Button>
     </div>
   );
 }

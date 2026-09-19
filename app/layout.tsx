@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { config as faConfig } from "@fortawesome/fontawesome-svg-core";
+import "@fortawesome/fontawesome-svg-core/styles.css";
 import { Providers } from "@/components/providers";
+
+// Prevent Font Awesome from injecting its CSS at runtime; we ship it above.
+faConfig.autoAddCss = false;
 
 export const metadata: Metadata = {
   title: "Kanban Job Tracker",
@@ -9,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <head>
         {/* Apply persisted theme before hydration: avoids FOUC and keeps the
             `dark` class in sync. suppressHydrationWarning on <html> covers the

@@ -1,5 +1,7 @@
 "use client";
 
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCircleInfo, faPen, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { JobCardT } from "@/lib/types";
@@ -36,25 +38,33 @@ export function JobCard({ card }: { card: JobCardT }) {
       style={style}
       {...attributes}
       {...listeners}
-      className="cursor-grab p-3 active:cursor-grabbing"
+      className="anim-card-in cursor-grab p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl active:cursor-grabbing"
       data-testid={`card-${card.id}`}
     >
       <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-sm font-semibold">{card.company}</p>
-          <p className="text-sm text-zinc-600 dark:text-zinc-300">{card.role}</p>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{card.company}</p>
+          <p className="truncate text-sm text-zinc-500 dark:text-zinc-400">{card.role}</p>
         </div>
-        {card.salary != null && <Badge>${card.salary.toLocaleString()}</Badge>}
+        {card.salary != null && <Badge className="shrink-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">${card.salary.toLocaleString()}</Badge>}
       </div>
-      <div className="mt-2 flex flex-wrap gap-1">
-        {card.tags.map((t) => (
-          <Badge key={t} className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">#{t}</Badge>
-        ))}
-      </div>
-      <div className="mt-3 flex gap-2">
-        <button className="text-xs underline" onClick={() => setDetailCard(card.id)}>Details</button>
-        <button className="text-xs underline" onClick={() => openEdit(card.id)}>Edit</button>
-        <button className="text-xs underline text-red-600 dark:text-red-400" onClick={handleDelete} aria-label={`Delete ${card.company} ${card.role}`}>Delete</button>
+      {card.tags.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {card.tags.map((t) => (
+            <Badge key={t} className="border-indigo-500/30 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300">#{t}</Badge>
+          ))}
+        </div>
+      )}
+      <div className="mt-3 flex items-center gap-1 border-t border-black/5 pt-2 text-xs dark:border-white/10">
+        <button className="flex items-center gap-1 rounded-md px-1.5 py-1 text-zinc-500 transition hover:bg-indigo-500/10 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-300" onClick={() => setDetailCard(card.id)}>
+          <FontAwesomeIcon icon={faCircleInfo} className="h-3 w-3" /> Details
+        </button>
+        <button className="flex items-center gap-1 rounded-md px-1.5 py-1 text-zinc-500 transition hover:bg-indigo-500/10 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-300" onClick={() => openEdit(card.id)}>
+          <FontAwesomeIcon icon={faPen} className="h-3 w-3" /> Edit
+        </button>
+        <button className="flex items-center gap-1 rounded-md px-1.5 py-1 text-zinc-500 transition hover:bg-red-500/10 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400" onClick={handleDelete} aria-label={`Delete ${card.company} ${card.role}`}>
+          <FontAwesomeIcon icon={faTrashCan} className="h-3 w-3" /> Delete
+        </button>
       </div>
     </CardShell>
   );

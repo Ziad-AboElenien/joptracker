@@ -13,6 +13,51 @@
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
+  /* Ambient glass backdrop: fixed gradient blobs over a soft base. */
+  background:
+    radial-gradient(1100px 500px at 10% -5%, rgba(99, 102, 241, 0.22), transparent 60%),
+    radial-gradient(900px 480px at 95% 0%, rgba(34, 211, 238, 0.18), transparent 60%),
+    radial-gradient(1000px 600px at 50% 110%, rgba(244, 114, 182, 0.14), transparent 60%),
+    #f4f5fb;
+  background-attachment: fixed;
+}
+
+.dark body {
+  background:
+    radial-gradient(1100px 500px at 10% -5%, rgba(99, 102, 241, 0.28), transparent 60%),
+    radial-gradient(900px 480px at 95% 0%, rgba(34, 211, 238, 0.16), transparent 60%),
+    radial-gradient(1000px 600px at 50% 110%, rgba(244, 114, 182, 0.12), transparent 60%),
+    #090b16;
+  background-attachment: fixed;
+}
+
+/* ---------- Motion: modals & dropdowns ---------- */
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes panel-pop {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes menu-drop {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.anim-overlay { animation: overlay-in 0.18s ease-out both; }
+.anim-panel { animation: panel-pop 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-menu { animation: menu-drop 0.16s cubic-bezier(0.22, 1, 0.36, 1) both; transform-origin: top center; }
+.anim-card-in { animation: card-in 0.25s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-overlay, .anim-panel, .anim-menu, .anim-card-in { animation: none; }
 }

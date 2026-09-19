@@ -1,9 +1,12 @@
 "use client";
 
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBriefcase, faCheck, faSpinner, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { jobCardSchema, type JobCardFormValues } from "@/lib/schemas/jobCard.schema";
-import { Input, Textarea, Button } from "@/components/ui/primitives";
+import { Input, Textarea, Button, Field } from "@/components/ui/primitives";
+import { Dropdown } from "@/components/ui/dropdown";
 import { useBoardStore } from "@/lib/store/boardStore";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -57,6 +60,9 @@ export function JobCardForm() {
       : undefined,
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- RHF watch() is the sanctioned reactive read API
+  const stageId = form.watch("columnId");
+
   const mutation = useMutation({
     mutationFn: saveCard,
     onMutate: async (payload) => {
@@ -91,61 +97,65 @@ export function JobCardForm() {
 
   if (!isOpen) return null;
 
+  const err = form.formState.errors;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Job card form">
-      <div className="absolute inset-0 bg-black/50" onClick={closeForm} />
+      <div className="anim-overlay absolute inset-0 bg-slate-950/50 backdrop-blur-sm" onClick={closeForm} />
       <form
-        className="relative w-full max-w-lg space-y-3 rounded-xl bg-white p-5 dark:bg-zinc-900"
+        className="anim-panel relative max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-2xl border border-white/60 bg-white/85 p-6 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/85"
         onSubmit={form.handleSubmit((v: JobCardFormValues) => mutation.mutate({ ...v, tags: typeof v.tags === "string" ? (v.tags as unknown as string).split(",").map((t: string) => t.trim()).filter(Boolean) : v.tags, id: editing?.id }))}
       >
-        <h2 className="text-lg font-semibold">{editing ? "Edit job" : "Add job"}</h2>
-        <div>
-          <label className="text-sm">Company *</label>
-          <Input {...form.register("company")} />
-          {form.formState.errors.company && <p className="text-xs text-red-600">{form.formState.errors.company.message}</p>}
+        <h2 className="flex items-center gap-2.5 text-lg font-semibold">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 text-white shadow-md shadow-indigo-500/30">
+            <FontAwesomeIcon icon={faBriefcase} className="h-4 w-4" />
+          </span>
+          {editing ? "Edit job" : "Add job"}
+        </h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Company" required error={err.company?.message}>
+            <Input {...form.register("company")} placeholder="Acme Corp" autoFocus />
+          </Field>
+          <Field label="Role" required error={err.role?.message}>
+            <Input {...form.register("role")} placeholder="Frontend Engineer" />
+          </Field>
         </div>
-        <div>
-          <label className="text-sm">Role *</label>
-          <Input {...form.register("role")} />
-          {form.formState.errors.role && <p className="text-xs text-red-600">{form.formState.errors.role.message}</p>}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Job URL" error={err.jobUrl ? String(err.jobUrl.message) : null}>
+            <Input {...form.register("jobUrl")} placeholder="https://…" inputMode="url" />
+          </Field>
+          <Field label="Salary" error={err.salary ? "Invalid salary" : null}>
+            <Input type="number" min={0} {...form.register("salary" as never)} placeholder="120000" />
+          </Field>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-sm">Job URL</label>
-            <Input {...form.register("jobUrl")} placeholder="https://…" />
-            {form.formState.errors.jobUrl && <p className="text-xs text-red-600">{String(form.formState.errors.jobUrl.message)}</p>}
-          </div>
-          <div>
-            <label className="text-sm">Salary (number)</label>
-            <Input type="number" {...form.register("salary" as never)} />
-            {form.formState.errors.salary && <p className="text-xs text-red-600">Invalid salary</p>}
-          </div>
-        </div>
-        <div>
-          <label className="text-sm">Tags (comma separated)</label>
+        <Field label="Tags (comma separated)">
           <Input placeholder="react, remote" defaultValue={(editing?.tags ?? []).join(", ")} onChange={(e) => form.setValue("tags", e.target.value.split(",").map((t) => t.trim()).filter(Boolean))} />
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-sm">Stage</label>
-            <select {...form.register("columnId")} className="h-10 w-full rounded-md border border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900">
-              {columnOrder.map((id) => (
-                <option key={id} value={id}>{columns[id]?.name}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-sm">Date applied</label>
+        </Field>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Stage">
+            <Dropdown
+              ariaLabel="Stage"
+              value={stageId}
+              onChange={(v) => form.setValue("columnId", v, { shouldValidate: true })}
+              options={columnOrder.map((id) => ({ value: id, label: columns[id]?.name ?? id }))}
+            />
+          </Field>
+          <Field label="Date applied">
             <Input type="date" {...form.register("dateApplied")} />
-          </div>
+          </Field>
         </div>
-        <div>
-          <label className="text-sm">Notes</label>
-          <Textarea rows={3} {...form.register("notes")} />
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={closeForm}>Cancel</Button>
-          <Button type="submit" disabled={mutation.isPending}>{mutation.isPending ? "Saving…" : "Save"}</Button>
+        <Field label="Notes">
+          <Textarea rows={3} {...form.register("notes")} placeholder="Interview notes, contacts…" />
+        </Field>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button type="button" variant="outline" onClick={closeForm}>
+            <FontAwesomeIcon icon={faXmark} className="h-3.5 w-3.5" /> Cancel
+          </Button>
+          <Button type="submit" variant="primary" disabled={mutation.isPending}>
+            {mutation.isPending
+              ? <><FontAwesomeIcon icon={faSpinner} spin className="h-3.5 w-3.5" /> Saving…</>
+              : <><FontAwesomeIcon icon={faCheck} className="h-3.5 w-3.5" /> Save</>}
+          </Button>
         </div>
       </form>
     </div>

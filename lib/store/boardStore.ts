@@ -45,7 +45,6 @@ interface BoardStore {
   editingCardId: string | null;
   formDefaultColumnId: string | null;
   detailCardId: string | null;
-  showAnalytics: boolean;
 
   filters: Filters;
 
@@ -80,7 +79,6 @@ interface BoardStore {
   openEdit: (cardId: string) => void;
   closeForm: () => void;
   setDetailCard: (cardId: string | null) => void;
-  setShowAnalytics: (v: boolean) => void;
 }
 
 function takeSnapshot(s: BoardStore): Snapshot {
@@ -160,7 +158,6 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   editingCardId: null,
   formDefaultColumnId: null,
   detailCardId: null,
-  showAnalytics: false,
   filters: { query: "", tag: null, dateFrom: null, dateTo: null },
   past: [],
   future: [],
@@ -326,7 +323,6 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
   openEdit: (cardId) => set({ isFormOpen: true, editingCardId: cardId }),
   closeForm: () => set({ isFormOpen: false, editingCardId: null }),
   setDetailCard: (cardId) => set({ detailCardId: cardId }),
-  setShowAnalytics: (v) => set({ showAnalytics: v }),
 }));
 
 // Activity log is server-fetched per card (TanStack Query), not kept in Zustand
