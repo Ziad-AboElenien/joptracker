@@ -1,15 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
-import { useBoardStore } from "@/lib/store/boardStore";
+import { useBoardStore, applyCardFilters } from "@/lib/store/boardStore";
+import type { JobCardT } from "@/lib/types";
 import { JobCard } from "@/components/board/Card";
 import { Button, Input } from "@/components/ui/primitives";
 
 export function ColumnView({ columnId }: { columnId: string }) {
   const column = useBoardStore((s) => s.columns[columnId]);
-  const cards = useBoardStore((s) => s.filteredCardsInColumn(columnId));
+  // Select only stable refs here: deriving a fresh array inside a selector
+  // breaks getSnapshot caching (infinite-loop error), so filter via useMemo.
+  const cardIds = useBoardStore((s) => s.cardOrderByColumn[columnId]);
+  const cardsById = useBoardStore((s) => s.cards);
+  const filters = useBoardStore((s) => s.filters);
+  const cards: JobCardT[] = useMemo(() => {
+    const list = (cardIds ?? []).map((id) => cardsById[id]).filter((c): c is JobCardT => Boolean(c));
+    return applyCardFilters(list, filters);
+  }, [cardIds, cardsById, filters]);
   const openCreate = useBoardStore((s) => s.openCreate);
   const renameColumnLocal = useBoardStore((s) => s.renameColumnLocal);
   const deleteColumnLocal = useBoardStore((s) => s.deleteColumnLocal);

@@ -102,6 +102,22 @@ function pushHistory(
 
 export const DEFAULT_COLUMNS = ["Wishlist", "Applied", "Interviewing", "Offer", "Rejected"];
 
+/**
+ * Pure filter helper. Components must NOT call store methods that return fresh
+ * arrays inside a zustand selector (getSnapshot must be cached) — instead
+ * select stable refs (ids, records, filters) and memoize with this function.
+ */
+export function applyCardFilters(cards: JobCardT[], filters: Filters): JobCardT[] {
+  const q = filters.query.trim().toLowerCase();
+  return cards.filter((c) => {
+    if (q && !(c.company.toLowerCase().includes(q) || c.role.toLowerCase().includes(q))) return false;
+    if (filters.tag && !c.tags.includes(filters.tag)) return false;
+    if (filters.dateFrom && c.dateApplied && c.dateApplied.slice(0, 10) < filters.dateFrom) return false;
+    if (filters.dateTo && c.dateApplied && c.dateApplied.slice(0, 10) > filters.dateTo) return false;
+    return true;
+  });
+}
+
 export function buildMockBoard(): { columns: ColumnT[]; cards: JobCardT[] } {
   const cols: ColumnT[] = DEFAULT_COLUMNS.map((name, i) => ({
     id: `col-${i}`,
@@ -176,15 +192,7 @@ export const useBoardStore = create<BoardStore>()((set, get) => ({
 
   filteredCardsInColumn: (columnId) => {
     const s = get();
-    const { query, tag, dateFrom, dateTo } = s.filters;
-    const q = query.trim().toLowerCase();
-    return s.cardsInColumn(columnId).filter((c) => {
-      if (q && !(c.company.toLowerCase().includes(q) || c.role.toLowerCase().includes(q))) return false;
-      if (tag && !c.tags.includes(tag)) return false;
-      if (dateFrom && c.dateApplied && c.dateApplied.slice(0, 10) < dateFrom) return false;
-      if (dateTo && c.dateApplied && c.dateApplied.slice(0, 10) > dateTo) return false;
-      return true;
-    });
+    return applyCardFilters(s.cardsInColumn(columnId), s.filters);
   },
 
   moveCard: (cardId, toColumnId, toIndex) => {
